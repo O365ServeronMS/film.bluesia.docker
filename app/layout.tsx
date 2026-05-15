@@ -1,18 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { BottomNav } from "@/components/BottomNav";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://phim.bluesia.net"),
-  title: "Bluesia Cinema",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://film.bluesia.net"),
+  title: "film.bluesia.net",
   description: "Góc nhỏ của người mê phim",
-  applicationName: "Bluesia Cinema",
+  applicationName: "film.bluesia.net",
   openGraph: {
-    title: "Bluesia Cinema",
+    title: "film.bluesia.net",
     description: "Góc nhỏ của người mê phim",
-    siteName: "Bluesia Cinema",
+    siteName: "film.bluesia.net",
     type: "website",
     locale: "vi_VN",
     images: [
@@ -20,13 +19,13 @@ export const metadata: Metadata = {
         url: "/icon-512.png",
         width: 512,
         height: 512,
-        alt: "Bluesia Cinema"
+        alt: "film.bluesia.net"
       }
     ]
   },
   twitter: {
     card: "summary",
-    title: "Bluesia Cinema",
+    title: "film.bluesia.net",
     description: "Góc nhỏ của người mê phim",
     images: ["/icon-512.png"]
   },
@@ -58,8 +57,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
         <BottomNav />
-        <SpeedInsights />
       </body>
     </html>
   );
 }
+

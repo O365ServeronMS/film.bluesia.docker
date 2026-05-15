@@ -39,7 +39,7 @@ function normalizeText(value?: string) {
 }
 
 function stableNoise(seed?: string) {
-  const text = seed || "bluesia";
+  const text = seed || "film.bluesia.net";
   let hash = 0;
   for (let i = 0; i < text.length; i += 1) {
     hash = (hash * 31 + text.charCodeAt(i)) >>> 0;

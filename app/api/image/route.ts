@@ -49,7 +49,7 @@ function imageCandidates(imageUrl: string) {
 async function fetchImage(url: string) {
   return fetch(url, {
     headers: {
-      "User-Agent": "Mozilla/5.0 (Bluesia Cinema; VPS image cache)",
+      "User-Agent": "Mozilla/5.0 (film.bluesia.net; VPS image cache)",
       "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
       "Referer": process.env.OPHIM_BASE_URL || "https://ophim1.com/"
     },
@@ -63,9 +63,9 @@ function imageResponse(body: Buffer, contentType: string, cacheStatus: "HIT" | "
     headers: {
       "Content-Type": contentType,
       "Cache-Control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000",
-      "X-Bluesia-Cache": cacheStatus,
-      "X-Bluesia-Cache-Type": "image",
-      ...(sourceUrl ? { "X-Bluesia-Image-Source": sourceUrl } : {})
+      "X-Film-Bluesia-Net-Cache": cacheStatus,
+      "X-Film-Bluesia-Net-Cache-Type": "image",
+      ...(sourceUrl ? { "X-Film-Bluesia-Net-Image-Source": sourceUrl } : {})
     }
   });
 }

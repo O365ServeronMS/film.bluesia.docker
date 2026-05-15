@@ -2,9 +2,9 @@ import Link from "next/link";
 import { ArrowLeft, Database, Globe2, ShieldCheck, Smartphone } from "lucide-react";
 
 const apiBase = process.env.OPHIM_BASE_URL || "https://ophim1.com";
-const cacheMaxBytes = Number(process.env.BLUESIA_CACHE_MAX_BYTES || 8589934592);
-const listTtl = Number(process.env.BLUESIA_LIST_CACHE_TTL_SECONDS || 300);
-const imageTtl = Number(process.env.BLUESIA_IMAGE_CACHE_TTL_SECONDS || 1296000);
+const cacheMaxBytes = Number(process.env.FILM_BLUESIA_NET_CACHE_MAX_BYTES || process.env.BLUESIA_CACHE_MAX_BYTES || 8589934592);
+const listTtl = Number(process.env.FILM_BLUESIA_NET_LIST_CACHE_TTL_SECONDS || process.env.BLUESIA_LIST_CACHE_TTL_SECONDS || 300);
+const imageTtl = Number(process.env.FILM_BLUESIA_NET_IMAGE_CACHE_TTL_SECONDS || process.env.BLUESIA_IMAGE_CACHE_TTL_SECONDS || 1296000);
 
 function gb(value: number) {
   return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`;

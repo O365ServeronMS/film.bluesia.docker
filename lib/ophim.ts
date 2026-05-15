@@ -40,7 +40,7 @@ function jsonFetchOptions() {
   return {
     cache: "no-store",
     headers: {
-      "User-Agent": "BluesiaPrivateCinema/3.0.2",
+      "User-Agent": "film.bluesia.net/3.0.2",
       "Accept": "application/json"
     }
   } as RequestInit;

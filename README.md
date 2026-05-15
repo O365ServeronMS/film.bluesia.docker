@@ -1,4 +1,4 @@
-# Bluesia Cinema
+# film.bluesia.net
 
 ## Bản 3.0.2 — VPS bounded cache fix
 
@@ -15,8 +15,7 @@
 - Trang xem phim bằng `link_embed`; nếu không có embed thì thử `link_m3u8` qua HLS.js.
 - Yêu thích và lịch sử xem lưu bằng `localStorage` trên trình duyệt.
 - Không dùng đăng nhập Basic Auth.
-- Có favicon/app icon riêng cho Bluesia Cinema.
-- Tích hợp Vercel Speed Insights để theo dõi Core Web Vitals nếu deploy trên Vercel.
+- Có favicon/app icon riêng cho film.bluesia.net.
 - Cache ảnh và metadata JSON trên VPS/Docker, giới hạn tổng 8GB.
 - Không cache video/HLS/m3u8/mp4; video vẫn đi trực tiếp từ nguồn ngoài về trình duyệt.
 
@@ -25,13 +24,13 @@
 Bản 3.0.2 sửa thiết kế cache so với bản 3.0.1 cũ: không dùng một TTL 15 ngày cho mọi metadata nữa.
 
 ```text
-BLUESIA_CACHE_DIR=/cache/bluesia
-BLUESIA_CACHE_MAX_BYTES=8589934592
-BLUESIA_IMAGE_CACHE_TTL_SECONDS=1296000
-BLUESIA_DETAIL_CACHE_TTL_SECONDS=1296000
-BLUESIA_TAXONOMY_CACHE_TTL_SECONDS=1296000
-BLUESIA_LIST_CACHE_TTL_SECONDS=300
-BLUESIA_SEARCH_CACHE_TTL_SECONDS=1800
+FILM_BLUESIA_NET_CACHE_DIR=/cache/film-bluesia-net
+FILM_BLUESIA_NET_CACHE_MAX_BYTES=8589934592
+FILM_BLUESIA_NET_IMAGE_CACHE_TTL_SECONDS=1296000
+FILM_BLUESIA_NET_DETAIL_CACHE_TTL_SECONDS=1296000
+FILM_BLUESIA_NET_TAXONOMY_CACHE_TTL_SECONDS=1296000
+FILM_BLUESIA_NET_LIST_CACHE_TTL_SECONDS=300
+FILM_BLUESIA_NET_SEARCH_CACHE_TTL_SECONDS=1800
 ```
 
 Ý nghĩa:
@@ -78,7 +77,7 @@ docker compose up -d --build
 Caddy reverse proxy khuyến nghị:
 
 ```caddy
-phim.bluesia.net {
+film.bluesia.net {
     encode gzip
     reverse_proxy 127.0.0.1:3030
 }
@@ -90,9 +89,7 @@ Kiểm tra cache:
 curl -s http://127.0.0.1:3030/api/cache/status | python3 -m json.tool
 ```
 
-## Deploy lên Vercel
 
-Vẫn deploy được lên Vercel, nhưng disk cache trên Vercel không bền vững như Docker VPS. Khuyến nghị bản 3.x dùng Docker VPS.
 
 ## Cấu trúc chính
 
@@ -110,3 +107,5 @@ lib/cache.ts        Cache manager giới hạn 8GB + TTL theo nhóm
 lib/ophim.ts        Adapter/normalizer dữ liệu OPhim
 lib/spotlight.ts    Smart Spotlight scoring
 ```
+
+

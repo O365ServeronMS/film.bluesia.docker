@@ -2,7 +2,7 @@ import crypto from "crypto";
 import path from "path";
 import { mkdir, readFile, readdir, rm, stat, writeFile } from "fs/promises";
 
-const DEFAULT_CACHE_ROOT = "/tmp/bluesia-cache";
+const DEFAULT_CACHE_ROOT = "/tmp/film-bluesia-net-cache";
 const DEFAULT_MAX_BYTES = 8 * 1024 * 1024 * 1024;
 const DEFAULT_IMAGE_TTL_SECONDS = 60 * 60 * 24 * 15;
 const DEFAULT_DETAIL_TTL_SECONDS = 60 * 60 * 24 * 15;
@@ -35,37 +35,54 @@ export type BinaryCacheHit = {
   sourceUrl?: string;
 };
 
-function numberFromEnv(name: string, fallback: number) {
-  const value = Number(process.env[name]);
-  return Number.isFinite(value) && value > 0 ? value : fallback;
+function firstDefinedEnv(names: string[]) {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value) return value;
+  }
+  return undefined;
+}
+
+function numberFromEnvs(names: string[], fallback: number) {
+  for (const name of names) {
+    const value = Number(process.env[name]);
+    if (Number.isFinite(value) && value > 0) return value;
+  }
+  return fallback;
 }
 
 export function cacheRoot() {
-  return process.env.BLUESIA_CACHE_DIR || process.env.IMAGE_CACHE_DIR || DEFAULT_CACHE_ROOT;
+  return firstDefinedEnv(["FILM_BLUESIA_NET_CACHE_DIR", "BLUESIA_CACHE_DIR", "IMAGE_CACHE_DIR"]) || DEFAULT_CACHE_ROOT;
 }
 
 export function cacheMaxBytes() {
-  return numberFromEnv("BLUESIA_CACHE_MAX_BYTES", DEFAULT_MAX_BYTES);
+  return numberFromEnvs(["FILM_BLUESIA_NET_CACHE_MAX_BYTES", "BLUESIA_CACHE_MAX_BYTES"], DEFAULT_MAX_BYTES);
 }
 
 export function imageCacheTtlSeconds() {
-  return numberFromEnv("BLUESIA_IMAGE_CACHE_TTL_SECONDS", numberFromEnv("BLUESIA_CACHE_TTL_SECONDS", DEFAULT_IMAGE_TTL_SECONDS));
+  return numberFromEnvs(
+    ["FILM_BLUESIA_NET_IMAGE_CACHE_TTL_SECONDS", "BLUESIA_IMAGE_CACHE_TTL_SECONDS"],
+    numberFromEnvs(["FILM_BLUESIA_NET_CACHE_TTL_SECONDS", "BLUESIA_CACHE_TTL_SECONDS"], DEFAULT_IMAGE_TTL_SECONDS)
+  );
 }
 
 export function detailCacheTtlSeconds() {
-  return numberFromEnv("BLUESIA_DETAIL_CACHE_TTL_SECONDS", numberFromEnv("BLUESIA_CACHE_TTL_SECONDS", DEFAULT_DETAIL_TTL_SECONDS));
+  return numberFromEnvs(
+    ["FILM_BLUESIA_NET_DETAIL_CACHE_TTL_SECONDS", "BLUESIA_DETAIL_CACHE_TTL_SECONDS"],
+    numberFromEnvs(["FILM_BLUESIA_NET_CACHE_TTL_SECONDS", "BLUESIA_CACHE_TTL_SECONDS"], DEFAULT_DETAIL_TTL_SECONDS)
+  );
 }
 
 export function taxonomyCacheTtlSeconds() {
-  return numberFromEnv("BLUESIA_TAXONOMY_CACHE_TTL_SECONDS", detailCacheTtlSeconds());
+  return numberFromEnvs(["FILM_BLUESIA_NET_TAXONOMY_CACHE_TTL_SECONDS", "BLUESIA_TAXONOMY_CACHE_TTL_SECONDS"], detailCacheTtlSeconds());
 }
 
 export function listCacheTtlSeconds() {
-  return numberFromEnv("BLUESIA_LIST_CACHE_TTL_SECONDS", DEFAULT_LIST_TTL_SECONDS);
+  return numberFromEnvs(["FILM_BLUESIA_NET_LIST_CACHE_TTL_SECONDS", "BLUESIA_LIST_CACHE_TTL_SECONDS"], DEFAULT_LIST_TTL_SECONDS);
 }
 
 export function searchCacheTtlSeconds() {
-  return numberFromEnv("BLUESIA_SEARCH_CACHE_TTL_SECONDS", DEFAULT_SEARCH_TTL_SECONDS);
+  return numberFromEnvs(["FILM_BLUESIA_NET_SEARCH_CACHE_TTL_SECONDS", "BLUESIA_SEARCH_CACHE_TTL_SECONDS"], DEFAULT_SEARCH_TTL_SECONDS);
 }
 
 function safeNamespace(namespace: string) {

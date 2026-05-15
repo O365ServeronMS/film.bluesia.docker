@@ -8,8 +8,12 @@ import { baseSpotlightScore, normalizedLabelSet } from "@/lib/spotlight";
 import { proxiedImage, ratingLabel } from "@/lib/utils";
 
 const SLIDE_INTERVAL_MS = 5000;
-const FAV_KEY = "bluesia:favorites";
-const HISTORY_KEY = "bluesia:history";
+const FAV_KEY = "film.bluesia.net:favorites";
+const HISTORY_KEY = "film.bluesia.net:history";
+const LEGACY_FAV_KEY = "bluesia:favorites";
+const LEGACY_HISTORY_KEY = "bluesia:history";
+const LOCAL_MOVIES_UPDATED_EVENT = "film.bluesia.net:local-movies-updated";
+const LEGACY_LOCAL_MOVIES_UPDATED_EVENT = "bluesia:local-movies-updated";
 
 type StoredMovie = MovieCard & { savedAt?: number };
 type PersonalData = { favorites: StoredMovie[]; history: StoredMovie[] };
@@ -22,7 +26,7 @@ type PreferenceMap = {
   type: Map<string, number>;
 };
 
-function readStored(key: string): StoredMovie[] {
+function readStoredRaw(key: string): StoredMovie[] {
   if (typeof window === "undefined") return [];
   try {
     const parsed = JSON.parse(localStorage.getItem(key) || "[]");
@@ -30,6 +34,12 @@ function readStored(key: string): StoredMovie[] {
   } catch {
     return [];
   }
+}
+
+function readStored(key: string, legacyKey?: string): StoredMovie[] {
+  const current = readStoredRaw(key);
+  if (current.length || !legacyKey) return current;
+  return readStoredRaw(legacyKey);
 }
 
 function addWeight(map: Map<string, number>, labels: Set<string>, weight: number) {
@@ -104,18 +114,23 @@ export function HeroSlider({ items }: { items: MovieCard[] }) {
 
   useEffect(() => {
     const refreshPersonalData = () => {
-      setPersonalData({ favorites: readStored(FAV_KEY), history: readStored(HISTORY_KEY) });
+      setPersonalData({
+        favorites: readStored(FAV_KEY, LEGACY_FAV_KEY),
+        history: readStored(HISTORY_KEY, LEGACY_HISTORY_KEY)
+      });
     };
 
     refreshPersonalData();
     window.addEventListener("storage", refreshPersonalData);
     window.addEventListener("focus", refreshPersonalData);
-    window.addEventListener("bluesia:local-movies-updated", refreshPersonalData);
+    window.addEventListener(LOCAL_MOVIES_UPDATED_EVENT, refreshPersonalData);
+    window.addEventListener(LEGACY_LOCAL_MOVIES_UPDATED_EVENT, refreshPersonalData);
 
     return () => {
       window.removeEventListener("storage", refreshPersonalData);
       window.removeEventListener("focus", refreshPersonalData);
-      window.removeEventListener("bluesia:local-movies-updated", refreshPersonalData);
+      window.removeEventListener(LOCAL_MOVIES_UPDATED_EVENT, refreshPersonalData);
+      window.removeEventListener(LEGACY_LOCAL_MOVIES_UPDATED_EVENT, refreshPersonalData);
     };
   }, []);
 

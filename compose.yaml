@@ -1,25 +1,25 @@
 services:
-  bluesia-app:
+  film-bluesia-net-app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: bluesia-app
+    container_name: film-bluesia-net-app
     restart: unless-stopped
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
       OPHIM_BASE_URL: "https://ophim1.com"
-      BLUESIA_CACHE_DIR: "/cache/bluesia"
-      BLUESIA_CACHE_MAX_BYTES: "8589934592"
-      BLUESIA_IMAGE_CACHE_TTL_SECONDS: "1296000"
-      BLUESIA_DETAIL_CACHE_TTL_SECONDS: "1296000"
-      BLUESIA_TAXONOMY_CACHE_TTL_SECONDS: "1296000"
-      BLUESIA_LIST_CACHE_TTL_SECONDS: "300"
-      BLUESIA_SEARCH_CACHE_TTL_SECONDS: "1800"
+      FILM_BLUESIA_NET_CACHE_DIR: "/cache/film-bluesia-net"
+      FILM_BLUESIA_NET_CACHE_MAX_BYTES: "8589934592"
+      FILM_BLUESIA_NET_IMAGE_CACHE_TTL_SECONDS: "1296000"
+      FILM_BLUESIA_NET_DETAIL_CACHE_TTL_SECONDS: "1296000"
+      FILM_BLUESIA_NET_TAXONOMY_CACHE_TTL_SECONDS: "1296000"
+      FILM_BLUESIA_NET_LIST_CACHE_TTL_SECONDS: "300"
+      FILM_BLUESIA_NET_SEARCH_CACHE_TTL_SECONDS: "1800"
     ports:
       - "127.0.0.1:3030:3000"
     volumes:
-      - bluesia_cache:/cache
+      - film_bluesia_net_cache:/cache
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
       interval: 30s
@@ -28,4 +28,4 @@ services:
       start_period: 60s
 
 volumes:
-  bluesia_cache:
+  film_bluesia_net_cache:

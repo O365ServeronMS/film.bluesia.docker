@@ -1,6 +1,6 @@
 {
-  "name": "Bluesia Cinema",
-  "short_name": "Bluesia",
+  "name": "film.bluesia.net",
+  "short_name": "film.bluesia.net",
   "description": "Góc nhỏ của người mê phim",
   "start_url": "/",
   "display": "standalone",
