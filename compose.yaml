@@ -1,9 +1,11 @@
+name: filmbluesianet
+
 services:
   bluesia-app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: film-bluesia-net:3.0.4
+    image: film-bluesia-net:3.0.5
     container_name: bluesia-app
     restart: unless-stopped
     environment:
@@ -17,13 +19,15 @@ services:
       BLUESIA_IMAGE_CACHE_TTL_SECONDS: "1296000"
       BLUESIA_DETAIL_CACHE_TTL_SECONDS: "1296000"
       BLUESIA_TAXONOMY_CACHE_TTL_SECONDS: "1296000"
-      BLUESIA_LIST_CACHE_TTL_SECONDS: "300"
+      BLUESIA_LIST_CACHE_TTL_SECONDS: "1800"
       BLUESIA_SEARCH_CACHE_TTL_SECONDS: "1800"
 
       BLUESIA_CACHE_WARMUP_TYPES: "phim-le,phim-bo"
       BLUESIA_CACHE_WARMUP_PAGES: "10"
       BLUESIA_CACHE_WARMUP_LIMIT: "30"
       BLUESIA_CACHE_WARMUP_IMAGE_CONCURRENCY: "6"
+      BLUESIA_CACHE_WARMUP_HTML: "1"
+      BLUESIA_CACHE_WARMUP_HTML_CONCURRENCY: "2"
     ports:
       - "127.0.0.1:3030:3000"
     volumes:
@@ -36,7 +40,7 @@ services:
       start_period: 60s
 
   bluesia-cache-warmer:
-    image: film-bluesia-net:3.0.4
+    image: film-bluesia-net:3.0.5
     container_name: bluesia-cache-warmer
     restart: unless-stopped
     depends_on:

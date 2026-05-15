@@ -13,6 +13,13 @@ function numberFromEnv(name: string, fallback: number) {
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
+function booleanFromEnv(name: string, fallback: boolean) {
+  const value = String(process.env[name] || "").trim().toLowerCase();
+  if (["1", "true", "yes", "on"].includes(value)) return true;
+  if (["0", "false", "no", "off"].includes(value)) return false;
+  return fallback;
+}
+
 function warmupTypes() {
   const raw = process.env.BLUESIA_CACHE_WARMUP_TYPES || "phim-le,phim-bo";
   return raw
@@ -78,7 +85,10 @@ async function warmImage(origin: string, imageUrl: string) {
   endpoint.searchParams.set("url", imageUrl);
 
   const res = await fetch(endpoint.toString(), {
-    cache: "no-store"
+    cache: "no-store",
+    headers: {
+      "User-Agent": "BluesiaCacheWarmer/3.0.5 image"
+    }
   });
 
   return {
@@ -89,6 +99,29 @@ async function warmImage(origin: string, imageUrl: string) {
       res.headers.get("x-film-bluesia-net-cache") ||
       res.headers.get("x-bluesia-image-cache") ||
       ""
+  };
+}
+
+async function warmHtmlPage(origin: string, type: string, page: number) {
+  const endpoint = new URL(`/list/${type}`, origin);
+  endpoint.searchParams.set("page", String(page));
+
+  const res = await fetch(endpoint.toString(), {
+    cache: "no-store",
+    headers: {
+      "User-Agent": "BluesiaCacheWarmer/3.0.5 html",
+      "X-Bluesia-Cache-Warmup": "1"
+    }
+  });
+
+  return {
+    type,
+    page,
+    url: endpoint.pathname + endpoint.search,
+    ok: res.ok,
+    status: res.status,
+    contentType: res.headers.get("content-type") || "",
+    bytes: Number(res.headers.get("content-length") || 0) || undefined
   };
 }
 
@@ -105,7 +138,12 @@ export async function GET(request: NextRequest) {
   const pages = numberFromEnv("BLUESIA_CACHE_WARMUP_PAGES", 10);
   const limit = numberFromEnv("BLUESIA_CACHE_WARMUP_LIMIT", 30);
   const imageConcurrency = numberFromEnv("BLUESIA_CACHE_WARMUP_IMAGE_CONCURRENCY", 6);
+  const htmlConcurrency = numberFromEnv("BLUESIA_CACHE_WARMUP_HTML_CONCURRENCY", 2);
+
   const shouldWarmImages = request.nextUrl.searchParams.get("images") !== "0";
+  const shouldWarmHtml =
+    request.nextUrl.searchParams.get("html") !== "0" &&
+    booleanFromEnv("BLUESIA_CACHE_WARMUP_HTML", true);
 
   const pageResults: Array<{
     type: string;
@@ -116,11 +154,14 @@ export async function GET(request: NextRequest) {
   }> = [];
 
   const movies: MovieCard[] = [];
+  const htmlTargets: Array<{ type: string; page: number }> = [];
 
   await pruneCache(false);
 
   for (const type of types) {
     for (let page = 1; page <= pages; page += 1) {
+      htmlTargets.push({ type, page });
+
       try {
         const data = await getList(type, page, limit);
         movies.push(...data.items);
@@ -150,22 +191,34 @@ export async function GET(request: NextRequest) {
     ? await mapLimit(imageUrls, imageConcurrency, (url) => warmImage(request.nextUrl.origin, url))
     : [];
 
+  const htmlResults = shouldWarmHtml
+    ? await mapLimit(htmlTargets, htmlConcurrency, (target) => warmHtmlPage(request.nextUrl.origin, target.type, target.page))
+    : [];
+
   await pruneCache(false);
 
   const stats = await cacheStats();
 
   return NextResponse.json({
     ok: true,
-    mode: "film.bluesia.net-cache-warmup",
+    mode: "film.bluesia.net-cache-warmup-v3.0.5",
     warmedTypes: types,
     warmedPagesPerType: pages,
     listLimit: limit,
+
     pageRequests: pageResults.length,
     pageErrors: pageResults.filter((item) => !item.ok).length,
+
     moviesDiscovered: movies.length,
+
     uniqueImagesDiscovered: imageUrls.length,
     imagesWarmed: imageResults.length,
     imageErrors: imageResults.filter((item) => !item.ok).length,
+
+    htmlPagesDiscovered: htmlTargets.length,
+    htmlPagesWarmed: htmlResults.length,
+    htmlErrors: htmlResults.filter((item) => !item.ok).length,
+
     durationMs: Date.now() - startedAt,
     cache: stats
   });

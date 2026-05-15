@@ -4,7 +4,7 @@ import { MovieCard } from "@/components/MovieCard";
 import { TopBar } from "@/components/TopBar";
 import { getList } from "@/lib/ophim";
 
-export const revalidate = 300;
+export const revalidate = 1800;
 
 type Props = {
   params: { type: string };
