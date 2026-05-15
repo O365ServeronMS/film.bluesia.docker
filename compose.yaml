@@ -1,27 +1,33 @@
-name: filmbluesianet
-
 services:
-  film-bluesia-net-app:
+  bluesia-app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: film-bluesia-net-app
+    image: film-bluesia-net:3.0.4
+    container_name: bluesia-app
     restart: unless-stopped
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
       OPHIM_BASE_URL: "https://ophim1.com"
-      FILM_BLUESIA_NET_CACHE_DIR: "/cache/film-bluesia-net"
-      FILM_BLUESIA_NET_CACHE_MAX_BYTES: "8589934592"
-      FILM_BLUESIA_NET_IMAGE_CACHE_TTL_SECONDS: "1296000"
-      FILM_BLUESIA_NET_DETAIL_CACHE_TTL_SECONDS: "1296000"
-      FILM_BLUESIA_NET_TAXONOMY_CACHE_TTL_SECONDS: "1296000"
-      FILM_BLUESIA_NET_LIST_CACHE_TTL_SECONDS: "300"
-      FILM_BLUESIA_NET_SEARCH_CACHE_TTL_SECONDS: "1800"
+
+      BLUESIA_CACHE_DIR: "/cache/bluesia"
+      BLUESIA_CACHE_MAX_BYTES: "8589934592"
+
+      BLUESIA_IMAGE_CACHE_TTL_SECONDS: "1296000"
+      BLUESIA_DETAIL_CACHE_TTL_SECONDS: "1296000"
+      BLUESIA_TAXONOMY_CACHE_TTL_SECONDS: "1296000"
+      BLUESIA_LIST_CACHE_TTL_SECONDS: "300"
+      BLUESIA_SEARCH_CACHE_TTL_SECONDS: "1800"
+
+      BLUESIA_CACHE_WARMUP_TYPES: "phim-le,phim-bo"
+      BLUESIA_CACHE_WARMUP_PAGES: "10"
+      BLUESIA_CACHE_WARMUP_LIMIT: "30"
+      BLUESIA_CACHE_WARMUP_IMAGE_CONCURRENCY: "6"
     ports:
       - "127.0.0.1:3030:3000"
     volumes:
-      - film_bluesia_net_cache:/cache
+      - bluesia_cache:/cache
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
       interval: 30s
@@ -29,5 +35,26 @@ services:
       retries: 3
       start_period: 60s
 
+  bluesia-cache-warmer:
+    image: film-bluesia-net:3.0.4
+    container_name: bluesia-cache-warmer
+    restart: unless-stopped
+    depends_on:
+      bluesia-app:
+        condition: service_healthy
+    environment:
+      WARMUP_URL: "http://bluesia-app:3000/api/cache/warmup"
+      WARMUP_INTERVAL_SECONDS: "1800"
+    command: >
+      sh -lc '
+        echo "[bluesia-cache-warmer] warmup service started";
+        while true; do
+          date;
+          wget -qO- "$$WARMUP_URL" || true;
+          echo;
+          sleep "$$WARMUP_INTERVAL_SECONDS";
+        done
+      '
+
 volumes:
-  film_bluesia_net_cache:
+  bluesia_cache:
