@@ -1,14 +1,7 @@
 import Link from "next/link";
-import { ArrowLeft, Database, Globe2, ShieldCheck, Smartphone } from "lucide-react";
+import { ArrowLeft, Database, Globe2, ShieldCheck } from "lucide-react";
 
 const apiBase = process.env.OPHIM_BASE_URL || "https://ophim1.com";
-const cacheMaxBytes = Number(process.env.FILM_BLUESIA_NET_CACHE_MAX_BYTES || process.env.BLUESIA_CACHE_MAX_BYTES || 8589934592);
-const listTtl = Number(process.env.FILM_BLUESIA_NET_LIST_CACHE_TTL_SECONDS || process.env.BLUESIA_LIST_CACHE_TTL_SECONDS || 300);
-const imageTtl = Number(process.env.FILM_BLUESIA_NET_IMAGE_CACHE_TTL_SECONDS || process.env.BLUESIA_IMAGE_CACHE_TTL_SECONDS || 1296000);
-
-function gb(value: number) {
-  return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`;
-}
 
 export default function SettingsPage() {
   return (
@@ -35,21 +28,8 @@ export default function SettingsPage() {
         </div>
 
         <div className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10">
-          <div className="mb-3 flex items-center gap-3 text-gold"><Database className="h-6 w-6" /><h2 className="text-lg font-black text-white">Cache VPS</h2></div>
-          <p className="text-sm leading-6 text-zinc-300">Giới hạn tổng cache: <strong>{gb(cacheMaxBytes)}</strong></p>
-          <p className="text-sm leading-6 text-zinc-300">TTL ảnh/chi tiết: <strong>{Math.round(imageTtl / 86400)} ngày</strong></p>
-          <p className="text-sm leading-6 text-zinc-300">TTL danh sách phim: <strong>{Math.round(listTtl / 60)} phút</strong></p>
-          <p className="mt-2 text-sm leading-6 text-zinc-400">Xem trạng thái tại <code>/api/cache/status</code>.</p>
-        </div>
-
-        <div className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10">
-          <div className="mb-3 flex items-center gap-3 text-gold"><Smartphone className="h-6 w-6" /><h2 className="text-lg font-black text-white">Lưu cục bộ</h2></div>
-          <p className="text-sm leading-6 text-zinc-400">Yêu thích và lịch sử xem được lưu bằng localStorage trên từng trình duyệt.</p>
-        </div>
-
-        <div className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10">
-          <div className="mb-3 flex items-center gap-3 text-gold"><ShieldCheck className="h-6 w-6" /><h2 className="text-lg font-black text-white">Khuyến nghị sử dụng</h2></div>
-          <p className="text-sm leading-6 text-zinc-400">Chỉ cache ảnh và metadata JSON. Không cache video, m3u8, ts, m4s hoặc mp4.</p>
+          <div className="mb-3 flex items-center gap-3 text-red-500"><ShieldCheck className="h-6 w-6" /><h2 className="text-lg font-black text-white">Miễn trừ trách nhiệm</h2></div>
+          <p className="text-sm leading-6 text-zinc-400">Ứng dụng này hoạt động hoàn toàn dựa trên cơ chế proxy dữ liệu. Chúng tôi không lưu trữ, phân phối hay sở hữu bất kỳ tệp tin video nào trên máy chủ riêng. Mọi nội dung phim đều được trích xuất tự động từ nguồn dữ liệu công khai của bên thứ ba (Ophim). Do đó, chúng tôi hoàn toàn miễn trừ trách nhiệm liên quan đến vấn đề bản quyền của các nội dung này.</p>
         </div>
       </section>
     </>

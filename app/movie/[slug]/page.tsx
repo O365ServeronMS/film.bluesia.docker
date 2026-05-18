@@ -7,15 +7,16 @@ import { proxiedImage, ratingLabel, stripHtml } from "@/lib/utils";
 
 export const revalidate = 300;
 
-type Props = { params: { slug: string } };
+type Props = { params: Promise<{ slug: string }> };
 
 function movieDisplayTitle(movie: Awaited<ReturnType<typeof getMovie>>) {
   const englishTitle = String(movie.originName || movie.name || "").trim();
   return englishTitle || "Phim";
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
   try {
+    const params = await props.params;
     const movie = await getMovie(params.slug);
     const title = `Bluesia Cinema - ${movieDisplayTitle(movie)}`;
     const description = stripHtml(movie.content) || "Góc nhỏ của người đam mê phim";
@@ -52,7 +53,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function MoviePage({ params }: Props) {
+export default async function MoviePage(props: Props) {
+  const params = await props.params;
   const movie = await getMovie(params.slug);
   const firstEp = movie.episodes[0]?.serverData[0];
   const heroImage = movie.thumb || movie.poster;

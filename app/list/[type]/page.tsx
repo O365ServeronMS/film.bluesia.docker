@@ -7,8 +7,8 @@ import { getList } from "@/lib/ophim";
 export const revalidate = 1800;
 
 type Props = {
-  params: { type: string };
-  searchParams?: { page?: string; country?: string; category?: string };
+  params: Promise<{ type: string }>;
+  searchParams: Promise<{ page?: string; country?: string; category?: string }>;
 };
 
 const quickCountries = [
@@ -49,7 +49,9 @@ function paginationPages(currentPage: number, totalPages?: number) {
   return Array.from({ length: Math.max(0, groupEnd - groupStart + 1) }, (_, index) => groupStart + index);
 }
 
-export default async function ListPage({ params, searchParams }: Props) {
+export default async function ListPage(props: Props) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
   const page = Math.max(1, Number(searchParams?.page || "1"));
   const supportsCountryFilter = countryFilterableTypes.has(params.type);
   const supportsCategoryFilter = categoryFilterableTypes.has(params.type);

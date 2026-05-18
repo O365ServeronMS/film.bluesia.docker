@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: film-bluesia-net:3.0.8
+    image: film-bluesia-net:4.0.1
     container_name: bluesia-app
     restart: unless-stopped
     mem_limit: 3g
@@ -43,7 +43,7 @@ services:
       retries: 3
       start_period: 60s
   bluesia-cache-warmer:
-    image: film-bluesia-net:3.0.8
+    image: film-bluesia-net:4.0.1
     container_name: bluesia-cache-warmer
     restart: unless-stopped
     depends_on:

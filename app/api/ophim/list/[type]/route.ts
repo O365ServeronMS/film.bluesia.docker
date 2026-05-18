@@ -3,9 +3,10 @@ import { getList } from "@/lib/ophim";
 
 export const runtime = "nodejs";
 
-type Params = { params: { type: string } };
+type Params = { params: Promise<{ type: string }> };
 
-export async function GET(req: NextRequest, { params }: Params) {
+export async function GET(req: NextRequest, props: Params) {
+  const params = await props.params;
   try {
     const page = Number(req.nextUrl.searchParams.get("page") || "1");
     const limit = Number(req.nextUrl.searchParams.get("limit") || "24");

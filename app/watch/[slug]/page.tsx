@@ -7,15 +7,16 @@ import { getMovie } from "@/lib/ophim";
 
 export const revalidate = 300;
 
-type Props = { params: { slug: string }; searchParams?: { server?: string; ep?: string } };
+type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ server?: string; ep?: string }> };
 
 function movieDisplayTitle(movie: Awaited<ReturnType<typeof getMovie>>) {
   const englishTitle = String(movie.originName || movie.name || "").trim();
   return englishTitle || "Phim";
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
   try {
+    const params = await props.params;
     const movie = await getMovie(params.slug);
     const movieTitle = movieDisplayTitle(movie);
     const title = `Watching - ${movieTitle}`;
@@ -53,7 +54,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function WatchPage({ params, searchParams }: Props) {
+export default async function WatchPage(props: Props) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
   const movie = await getMovie(params.slug);
   const serverIndex = Math.max(0, Number(searchParams?.server || "0"));
   const server = movie.episodes[serverIndex] || movie.episodes[0];

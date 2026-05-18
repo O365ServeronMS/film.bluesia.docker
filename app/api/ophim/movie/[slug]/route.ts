@@ -3,9 +3,10 @@ import { getMovie } from "@/lib/ophim";
 
 export const runtime = "nodejs";
 
-type Params = { params: { slug: string } };
+type Params = { params: Promise<{ slug: string }> };
 
-export async function GET(_: Request, { params }: Params) {
+export async function GET(_: Request, props: Params) {
+  const params = await props.params;
   try {
     const data = await getMovie(params.slug);
     return NextResponse.json(data, {

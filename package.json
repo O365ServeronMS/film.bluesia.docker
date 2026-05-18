@@ -1,6 +1,6 @@
 {
   "name": "film.bluesia.net",
-  "version": "3.0.8",
+  "version": "4.0.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,22 +9,23 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@types/node": "^20.17.17",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
-    "autoprefixer": "^10.4.20",
+    "@tailwindcss/postcss": "^4.3.0",
+    "@types/node": "^25.8.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.5.0",
     "clsx": "^2.1.1",
     "critters": "^0.0.25",
-    "hls.js": "^1.5.20",
-    "lucide-react": "^0.468.0",
-    "next": "^14.2.35",
+    "hls.js": "^1.6.16",
+    "lucide-react": "^1.16.0",
+    "next": "^16.2.6",
     "postcss": "^8.5.14",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "sharp": "^0.34.5",
-    "tailwind-merge": "^2.6.0",
-    "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.3"
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.0",
+    "typescript": "^6.0.3"
   },
   "browserslist": [
     "Chrome >= 90",
