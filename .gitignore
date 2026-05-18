@@ -22,3 +22,5 @@ backups/
 *.tmp
 *.swp
 tmp/
+claude.md
+CLAUDE.md
