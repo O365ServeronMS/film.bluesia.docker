@@ -128,6 +128,7 @@ export default async function ListPage({ params, searchParams }: Props) {
             movie={movie}
             compact
             headingLevel={2}
+            priority={index === 0}
             deferImage={index >= 9}
           />
         ))}

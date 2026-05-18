@@ -8,12 +8,14 @@ export function MovieCard({
   movie,
   compact = false,
   headingLevel = 3,
-  deferImage = false
+  deferImage = false,
+  priority = false
 }: {
   movie: MovieCardType;
   compact?: boolean;
   headingLevel?: 2 | 3;
   deferImage?: boolean;
+  priority?: boolean;
 }) {
   const image = movie.poster || movie.thumb;
   const imageSrc = image ? proxiedImage(image, compact ? 220 : 320, 55) : "";
@@ -36,7 +38,7 @@ export function MovieCard({
       <article className="overflow-hidden rounded-2xl bg-card shadow-xl shadow-black/20 ring-1 ring-white/5 transition duration-300 group-hover:-translate-y-1 group-hover:ring-gold/50">
         <div className="relative aspect-[2/3] overflow-hidden bg-zinc-900">
           {image ? (
-            deferImage ? (
+            deferImage && !priority ? (
               <LazyImage
                 src={imageSrc}
                 srcSet={mobileImageSrcSet}
@@ -54,7 +56,8 @@ export function MovieCard({
                   srcSet={mobileImageSrcSet}
                   sizes={mobileImageSizes}
                   alt={movie.name}
-                  loading="lazy"
+                  loading={priority ? "eager" : "lazy"}
+                  fetchPriority={priority ? "high" : "auto"}
                   decoding="async"
                   className={imageClassName}
                 />
