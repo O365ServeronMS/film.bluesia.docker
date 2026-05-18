@@ -1,4 +1,4 @@
-# Bluesia Cinema v4.0.4
+# Bluesia Cinema v4.0.5
 
 Một ứng dụng web xem phim tốc độ cao, thiết kế tối giản, được xây dựng trên nền tảng công nghệ web hiện đại.
 

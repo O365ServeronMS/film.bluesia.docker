@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: film-bluesia-net:4.0.4
+    image: film-bluesia-net:4.0.5
     container_name: bluesia-app
     restart: unless-stopped
     mem_limit: 3g
@@ -14,7 +14,10 @@ services:
       NEXT_TELEMETRY_DISABLED: "1"
       OPHIM_BASE_URL: https://ophim1.com
       BLUESIA_CACHE_DIR: /cache/bluesia
-      BLUESIA_CACHE_MAX_BYTES: "8589934592"
+      BLUESIA_CACHE_MAX_BYTES: "2147483648"
+      TORRENT_PORT: "6881"
+      TORRENT_CONNECTIONS: "300"
+      TORRENT_UPLOAD_SLOTS: "4"
       BLUESIA_IMAGE_CACHE_TTL_SECONDS: "1296000"
       BLUESIA_IMAGE_WEBP_QUALITY: "70"
       BLUESIA_IMAGE_MAX_WIDTH: "720"
@@ -30,6 +33,8 @@ services:
       BLUESIA_CACHE_WARMUP_HTML_CONCURRENCY: "2"
     ports:
       - 127.0.0.1:3030:3000
+      - 6881:6881/tcp
+      - 6881:6881/udp
     volumes:
       - bluesia_cache:/cache
     healthcheck:
@@ -43,7 +48,7 @@ services:
       retries: 3
       start_period: 60s
   bluesia-cache-warmer:
-    image: film-bluesia-net:4.0.4
+    image: film-bluesia-net:4.0.5
     container_name: bluesia-cache-warmer
     restart: unless-stopped
     depends_on:

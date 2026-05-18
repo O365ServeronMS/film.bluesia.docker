@@ -10,6 +10,9 @@ const CLEANUP_INTERVAL = 60 * 60 * 1000;   // Dọn dẹp mỗi giờ
 const READY_TIMEOUT_MS  = 30_000;          // 30s max wait for engine ready
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
 const PREBUFFER_BYTES = 500 * 1024 * 1024;
+const TORRENT_PORT = Number(process.env.TORRENT_PORT || 6881);
+const TORRENT_CONNECTIONS = Number(process.env.TORRENT_CONNECTIONS || 300);
+const TORRENT_UPLOAD_SLOTS = Number(process.env.TORRENT_UPLOAD_SLOTS || 4);
 
 if (!fs.existsSync(TMP_DIR)) {
   fs.mkdirSync(TMP_DIR, { recursive: true });
@@ -19,14 +22,26 @@ if (!fs.existsSync(TMP_DIR)) {
 const TRACKERS = [
   'udp://tracker.opentrackr.org:1337/announce',
   'udp://open.demonii.com:1337/announce',
-  'udp://tracker.openbittorrent.com:80/announce',
-  'udp://tracker.coppersurfer.tk:6969/announce',
-  'udp://tracker.leechers-paradise.org:6969/announce',
-  'udp://tracker.internetwarriors.net:1337/announce',
-  'udp://exodus.desync.com:6969/announce',
-  'udp://tracker.dler.org:6969/announce',
-  'udp://9.rarbg.to:2710/announce',
-  'udp://9.rarbg.me:2710/announce',
+  'udp://open.stealth.si:80/announce',
+  'udp://tracker.torrent.eu.org:451/announce',
+  'udp://vito-tracker.space:6969/announce',
+  'udp://vito-tracker.duckdns.org:6969/announce',
+  'udp://udp.tracker.projectk.org:23333/announce',
+  'udp://tracker.tryhackx.org:6969/announce',
+  'udp://tracker.t-1.org:6969/announce',
+  'udp://tracker.startwork.cv:1337/announce',
+  'udp://tracker.srv00.com:6969/announce',
+  'udp://tracker.qu.ax:6969/announce',
+  'udp://tracker.plx.im:6969/announce',
+  'udp://tracker.opentorrent.top:6969/announce',
+  'udp://tracker.iperson.xyz:6969/announce',
+  'udp://tracker.gmi.gd:6969/announce',
+  'udp://tracker.ducks.party:1984/announce',
+  'udp://tracker.bluefrog.pw:2710/announce',
+  'udp://tracker.bittor.pw:1337/announce',
+  'udp://tracker.auctor.tv:6969/announce',
+  'http://tracker.opentrackr.org:1337/announce',
+  'https://tracker.tamersunion.org:443/announce',
 ];
 
 interface EngineInstance {
@@ -85,6 +100,28 @@ class TorrentEngine {
     }
   }
 
+  public getStats() {
+    return Array.from(this.engines.entries()).map(([hash, instance]) => {
+      const swarm = instance.engine?.swarm;
+      return {
+        hash,
+        fileName: instance.file?.name || '',
+        fileSize: instance.file?.length || 0,
+        activeStreams: instance.activeStreams,
+        lastAccessed: instance.lastAccessed,
+        peersConnected: swarm?.wires?.length || 0,
+        peersQueued: swarm?.queued || 0,
+        downloadedBytes: swarm?.downloaded || 0,
+        uploadedBytes: swarm?.uploaded || 0,
+        downloadSpeedBytesPerSecond: swarm?.downloadSpeed?.() || 0,
+        uploadSpeedBytesPerSecond: swarm?.uploadSpeed?.() || 0,
+        maxConnections: TORRENT_CONNECTIONS,
+        uploadSlots: TORRENT_UPLOAD_SLOTS,
+        listeningPort: TORRENT_PORT,
+      };
+    });
+  }
+
   /**
    * Returns a Promise<file>.
    * Rejects after READY_TIMEOUT_MS if no peers found.
@@ -118,9 +155,13 @@ class TorrentEngine {
       const engine = torrentStream(magnet, {
         tmp: os.tmpdir(),
         path: path.join(TMP_DIR, hash),
-        trackers: [], // already embedded in magnet
-        connections: 100, // Tăng tối đa để lấy tốc độ tốt nhất (mặc định 100)
-        uploads: 0,      // Ngăn chặn 100% việc seeding (upload ngược lại) để cứu BW
+        trackers: TRACKERS,
+        connections: TORRENT_CONNECTIONS,
+        uploads: TORRENT_UPLOAD_SLOTS,
+      });
+
+      engine.listen(TORRENT_PORT, () => {
+        console.log(`[TorrentEngine] Listening for peers on TCP ${TORRENT_PORT}`);
       });
 
       const timeout = setTimeout(() => {

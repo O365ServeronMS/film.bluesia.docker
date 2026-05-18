@@ -31,6 +31,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/next.config.mjs ./next.config.mjs
 
 USER nextjs
-EXPOSE 3000
+EXPOSE 3000 6881/tcp 6881/udp
 
 CMD ["npm", "start"]
