@@ -3,7 +3,7 @@ import path from "path";
 import { mkdir, readFile, readdir, rm, stat, writeFile } from "fs/promises";
 
 const DEFAULT_CACHE_ROOT = "/tmp/film-bluesia-net-cache";
-const DEFAULT_MAX_BYTES = 8 * 1024 * 1024 * 1024;
+const DEFAULT_MAX_BYTES = 2 * 1024 * 1024 * 1024;
 const DEFAULT_IMAGE_TTL_SECONDS = 60 * 60 * 24 * 15;
 const DEFAULT_DETAIL_TTL_SECONDS = 60 * 60 * 24 * 15;
 const DEFAULT_TAXONOMY_TTL_SECONDS = 60 * 60 * 24 * 15;

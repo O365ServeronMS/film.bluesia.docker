@@ -21,3 +21,4 @@ backups/
 *.bak.*
 *.tmp
 *.swp
+tmp/

@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, ListVideo } from "lucide-react";
+import { ArrowLeft, ExternalLink, ListVideo, Magnet } from "lucide-react";
 import { HlsVideo } from "@/components/HlsVideo";
+import { TorrentVideo } from "@/components/TorrentVideo";
 import { WatchRecorder } from "@/components/WatchRecorder";
 import { getMovie } from "@/lib/ophim";
 
 export const revalidate = 300;
 
-type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ server?: string; ep?: string }> };
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ server?: string; ep?: string; source?: string; hash?: string }>;
+};
 
 function movieDisplayTitle(movie: Awaited<ReturnType<typeof getMovie>>) {
   const englishTitle = String(movie.originName || movie.name || "").trim();
@@ -32,12 +36,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
         siteName: "Bluesia Cinema",
         type: "video.movie",
         locale: "vi_VN",
-        images: [
-          {
-            url: image,
-            alt: movieTitle
-          }
-        ]
+        images: [{ url: image, alt: movieTitle }]
       },
       twitter: {
         card: "summary_large_image",
@@ -58,55 +57,135 @@ export default async function WatchPage(props: Props) {
   const params = await props.params;
   const searchParams = await props.searchParams;
   const movie = await getMovie(params.slug);
+
+  // --- Torrent mode ---
+  const isTorrent = searchParams?.source === "torrent" && !!searchParams?.hash;
+  const torrentHash = searchParams?.hash || "";
+
+  // --- Ophim mode ---
   const serverIndex = Math.max(0, Number(searchParams?.server || "0"));
   const server = movie.episodes[serverIndex] || movie.episodes[0];
   const epKey = searchParams?.ep;
-  const episode = server?.serverData.find((ep) => ep.slug === epKey || ep.name === epKey) || server?.serverData[0];
+  const episode =
+    server?.serverData.find((ep) => ep.slug === epKey || ep.name === epKey) ||
+    server?.serverData[0];
   const embed = episode?.linkEmbed;
   const m3u8 = episode?.linkM3u8;
+
+  const imdbId = movie.imdb?.id;
 
   return (
     <article className="min-h-screen bg-black">
       <WatchRecorder movie={movie} />
+
+      {/* Header */}
       <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-white/10 bg-black/90 px-4 py-3 backdrop-blur-xl">
-        <Link href={`/movie/${movie.slug}`} className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white">
+        <Link
+          href={`/movie/${movie.slug}`}
+          className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white"
+        >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-base font-black">{movie.name}</h1>
-          <p className="truncate text-xs text-zinc-400">{server?.serverName || "Server"} · {episode?.name || "Tập phim"}</p>
+          {isTorrent ? (
+            <p className="inline-flex items-center gap-1 truncate text-xs text-gold">
+              <Magnet className="h-3 w-3" /> Torrent Stream
+            </p>
+          ) : (
+            <p className="truncate text-xs text-zinc-400">
+              {server?.serverName || "Server"} · {episode?.name || "Tập phim"}
+            </p>
+          )}
         </div>
-        {embed && <a href={embed} target="_blank" rel="noreferrer" className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white"><ExternalLink className="h-5 w-5" /></a>}
+        {!isTorrent && embed && (
+          <a
+            href={embed}
+            target="_blank"
+            rel="noreferrer"
+            className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white"
+          >
+            <ExternalLink className="h-5 w-5" />
+          </a>
+        )}
       </header>
 
+      {/* Player */}
       <section className="aspect-video w-full bg-black">
-        {m3u8 ? (
+        {isTorrent ? (
+          <TorrentVideo
+            hash={torrentHash}
+            poster={movie.thumb || movie.poster}
+            imdbId={imdbId}
+            movieTitle={movieDisplayTitle(movie)}
+          />
+        ) : m3u8 ? (
           <HlsVideo src={m3u8} poster={movie.thumb || movie.poster} />
         ) : embed ? (
-          <iframe src={embed} title={`${movie.name} - ${episode?.name || "Tập phim"}`} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen className="h-full w-full border-0" />
+          <iframe
+            src={embed}
+            title={`${movie.name} - ${episode?.name || "Tập phim"}`}
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+            className="h-full w-full border-0"
+          />
         ) : (
-          <div className="grid h-full place-items-center p-6 text-center text-sm text-zinc-400">Không có link xem cho tập này.</div>
+          <div className="grid h-full place-items-center p-6 text-center text-sm text-zinc-400">
+            Không có link xem cho tập này.
+          </div>
         )}
       </section>
 
-      <section className="bg-[#07090f] px-4 py-5">
-        <div className="mb-4 flex items-center gap-2 text-lg font-black"><ListVideo className="h-5 w-5 text-gold" /> Danh sách tập</div>
-        {movie.episodes.map((sv, svIndex) => (
-          <div key={`${sv.serverName}-${svIndex}`} className="mb-5 rounded-3xl bg-white/5 p-4 ring-1 ring-white/10">
-            <h2 className="mb-3 text-sm font-bold text-zinc-300">{sv.serverName}</h2>
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-              {sv.serverData.map((ep, epIndex) => {
-                const active = svIndex === serverIndex && (ep.slug === episode?.slug || ep.name === episode?.name || epIndex === 0 && !epKey);
-                return (
-                  <Link key={`${ep.slug || ep.name}-${epIndex}`} href={`/watch/${movie.slug}?server=${svIndex}&ep=${encodeURIComponent(ep.slug || ep.name || String(epIndex))}`} className={active ? "rounded-xl bg-gold px-3 py-2 text-center text-xs font-black text-black" : "rounded-xl bg-white/10 px-3 py-2 text-center text-xs font-bold text-white transition hover:bg-white/15"}>
-                    {ep.name || epIndex + 1}
-                  </Link>
-                );
-              })}
-            </div>
+      {/* Ophim episode list — only shown in Ophim mode */}
+      {!isTorrent && (
+        <section className="bg-[#07090f] px-4 py-5">
+          <div className="mb-4 flex items-center gap-2 text-lg font-black">
+            <ListVideo className="h-5 w-5 text-gold" /> Danh sách tập
           </div>
-        ))}
-      </section>
+          {movie.episodes.map((sv, svIndex) => (
+            <div
+              key={`${sv.serverName}-${svIndex}`}
+              className="mb-5 rounded-3xl bg-white/5 p-4 ring-1 ring-white/10"
+            >
+              <h2 className="mb-3 text-sm font-bold text-zinc-300">{sv.serverName}</h2>
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                {sv.serverData.map((ep, epIndex) => {
+                  const active =
+                    svIndex === serverIndex &&
+                    (ep.slug === episode?.slug ||
+                      ep.name === episode?.name ||
+                      (epIndex === 0 && !epKey));
+                  return (
+                    <Link
+                      key={`${ep.slug || ep.name}-${epIndex}`}
+                      href={`/watch/${movie.slug}?server=${svIndex}&ep=${encodeURIComponent(ep.slug || ep.name || String(epIndex))}`}
+                      className={
+                        active
+                          ? "rounded-xl bg-gold px-3 py-2 text-center text-xs font-black text-black"
+                          : "rounded-xl bg-white/10 px-3 py-2 text-center text-xs font-bold text-white transition hover:bg-white/15"
+                      }
+                    >
+                      {ep.name || epIndex + 1}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* Back to movie button in torrent mode */}
+      {isTorrent && (
+        <section className="bg-[#07090f] px-4 py-5">
+          <Link
+            href={`/movie/${movie.slug}`}
+            className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold text-white transition hover:bg-white/15"
+          >
+            <ArrowLeft className="h-4 w-4" /> Xem nguồn khác
+          </Link>
+        </section>
+      )}
     </article>
   );
 }

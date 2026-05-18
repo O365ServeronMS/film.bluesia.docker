@@ -1,6 +1,6 @@
 {
   "name": "film.bluesia.net",
-  "version": "4.0.1",
+  "version": "4.0.4",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -20,12 +20,14 @@
     "hls.js": "^1.6.16",
     "lucide-react": "^1.16.0",
     "next": "^16.2.6",
+    "parse-torrent": "^11.0.19",
     "postcss": "^8.5.14",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "sharp": "^0.34.5",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.0",
+    "torrent-stream": "^1.2.1",
     "typescript": "^6.0.3"
   },
   "browserslist": [
@@ -34,5 +36,9 @@
     "Safari >= 14",
     "Edge >= 90",
     "not IE 11"
-  ]
+  ],
+  "devDependencies": {
+    "@types/parse-torrent": "^5.8.8",
+    "@types/torrent-stream": "^0.0.9"
+  }
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, Play, Star, Users } from "lucide-react";
 import { MovieActions } from "@/components/LocalMovieActions";
+import { TorrentSources } from "@/components/TorrentSources";
 import { getMovie } from "@/lib/ophim";
 import { proxiedImage, ratingLabel, stripHtml } from "@/lib/utils";
 
@@ -135,9 +136,14 @@ export default async function MoviePage(props: Props) {
           </div>
         ) : null}
 
+        <TorrentSources
+          movieSlug={movie.slug}
+          movieTitle={movie.originName || movie.name}
+        />
+
         {movie.episodes.length ? (
           <div className="mt-8">
-            <h2 className="text-xl font-black">Tập phim</h2>
+            <h2 className="text-xl font-black">Tập phim (Ophim)</h2>
             {movie.episodes.map((server, serverIndex) => (
               <div key={`${server.serverName}-${serverIndex}`} className="mt-4 rounded-3xl bg-white/5 p-4 ring-1 ring-white/10">
                 <h3 className="mb-3 text-sm font-bold text-zinc-300">{server.serverName}</h3>

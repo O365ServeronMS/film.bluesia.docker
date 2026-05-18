@@ -6,9 +6,10 @@ import { searchMovies } from "@/lib/ophim";
 
 export const revalidate = 120;
 
-type Props = { searchParams?: { q?: string; page?: string } };
+type Props = { searchParams: Promise<{ q?: string; page?: string }> };
 
-export default async function SearchPage({ searchParams }: Props) {
+export default async function SearchPage(props: Props) {
+  const searchParams = await props.searchParams;
   const q = searchParams?.q || "";
   const page = Math.max(1, Number(searchParams?.page || "1"));
   const data = q ? await searchMovies(q, page, 30) : { title: "Tìm kiếm", items: [], page };
