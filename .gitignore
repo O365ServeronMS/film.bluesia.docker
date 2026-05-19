@@ -21,3 +21,15 @@ backups/
 *.bak.*
 *.tmp
 *.swp
+tmp/
+
+# Local editor/workspace state
+.vscode/
+scratch/
+
+# TypeScript incremental cache
+*.tsbuildinfo
+
+# Local assistant notes
+claude.md
+CLAUDE.md
