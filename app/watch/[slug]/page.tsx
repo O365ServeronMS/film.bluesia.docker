@@ -1,25 +1,41 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowLeft, ExternalLink, ListVideo } from "lucide-react";
-import { HlsVideo } from "@/components/HlsVideo";
+import { IframePlayerFacade } from "@/components/IframePlayerFacade";
 import { WatchRecorder } from "@/components/WatchRecorder";
 import { episodeWatchKey, findEpisodeByWatchKey } from "@/lib/episodes";
 import { displayEpisodeServerName, getMovie } from "@/lib/ophim";
+
+const HlsVideo = dynamic(() => import("@/components/HlsVideo").then((mod) => mod.HlsVideo), {
+  loading: () => (
+    <div className="grid h-full place-items-center bg-black p-6 text-center text-sm text-zinc-400">
+      Đang tải trình phát video...
+    </div>
+  )
+});
 
 export const revalidate = 300;
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ server?: string; ep?: string; player?: string; mirror?: string }> };
 
-const vidsrcHosts = new Set(["vidsrc-embed.ru", "vidsrc-embed.su", "vidsrcme.su", "vsrc.su"]);
+const vidsrcHosts = new Set([
+  "vsembed.ru",
+  "vsembed.su",
+  "vidsrc-embed.ru",
+  "vidsrc-embed.su",
+  "vidsrcme.su",
+  "vsrc.su"
+]);
 
 function isMobileUserAgent(userAgent: string) {
   return /android|iphone|ipad|ipod|mobile|iemobile|opera mini|webos/i.test(userAgent);
 }
 
 function mobileVidsrcHost() {
-  const host = String(process.env.VSEMBED_MOBILE_EMBED_HOST || "vsrc.su").trim().toLowerCase();
-  return vidsrcHosts.has(host) ? host : "vsrc.su";
+  const host = String(process.env.VSEMBED_MOBILE_EMBED_HOST || "vsembed.su").trim().toLowerCase();
+  return vidsrcHosts.has(host) ? host : "vsembed.su";
 }
 
 function resolveEmbedUrl(src: string | undefined, options: { mobile: boolean; mirror?: string }) {
@@ -112,6 +128,12 @@ export default async function WatchPage(props: Props) {
 
   return (
     <article className="min-h-screen bg-black">
+      <link rel="preconnect" href="https://vsembed.ru" />
+      <link rel="preconnect" href="https://vsembed.su" />
+      <link rel="preconnect" href="https://img.ophim.live" />
+      <link rel="preconnect" href="https://img.ophim.cc" />
+      <link rel="dns-prefetch" href="https://vsembed.ru" />
+      <link rel="dns-prefetch" href="https://vsembed.su" />
       <WatchRecorder movie={movie} />
       <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-white/10 bg-black/90 px-4 py-3 backdrop-blur-xl">
         <Link href={`/movie/${movie.slug}`} className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white">
@@ -128,7 +150,11 @@ export default async function WatchPage(props: Props) {
         {!useEmbedPlayer && m3u8 ? (
           <HlsVideo src={m3u8} poster={movie.thumb || movie.poster} />
         ) : playerEmbed ? (
-          <iframe src={playerEmbed} title={`${movie.name} - ${episode?.name || "Tập phim"}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerPolicy="origin" allowFullScreen className="h-full w-full border-0" />
+          <IframePlayerFacade
+            src={playerEmbed}
+            poster={movie.thumb || movie.poster}
+            title={`${movie.name} - ${episode?.name || "Tập phim"}`}
+          />
         ) : (
           <div className="grid h-full place-items-center p-6 text-center text-sm text-zinc-400">Không có link xem cho tập này.</div>
         )}

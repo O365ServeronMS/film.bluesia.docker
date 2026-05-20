@@ -1,6 +1,6 @@
 import type { Episode, EpisodeServer, MovieDetail } from "@/lib/types";
 
-const DEFAULT_EMBED_BASE_URL = "https://vidsrc-embed.ru";
+const DEFAULT_EMBED_BASE_URL = "https://vsembed.ru";
 
 function embedBaseUrl() {
   return (process.env.VSEMBED_EMBED_BASE_URL || DEFAULT_EMBED_BASE_URL).replace(/\/$/, "");

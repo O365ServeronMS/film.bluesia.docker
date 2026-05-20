@@ -141,6 +141,38 @@ async function warmHtmlPage(origin: string, type: string, page: number) {
   };
 }
 
+async function warmMoviePage(origin: string, slug: string) {
+  const endpoint = new URL(`/movie/${slug}`, origin);
+  const res = await fetch(endpoint.toString(), {
+    cache: "no-store",
+    headers: {
+      "User-Agent": "BluesiaCacheWarmer/3.0.5 html",
+      "X-Bluesia-Cache-Warmup": "1"
+    }
+  });
+  return {
+    slug,
+    ok: res.ok,
+    status: res.status
+  };
+}
+
+async function warmWatchPage(origin: string, slug: string) {
+  const endpoint = new URL(`/watch/${slug}`, origin);
+  const res = await fetch(endpoint.toString(), {
+    cache: "no-store",
+    headers: {
+      "User-Agent": "BluesiaCacheWarmer/3.0.5 html",
+      "X-Bluesia-Cache-Warmup": "1"
+    }
+  });
+  return {
+    slug,
+    ok: res.ok,
+    status: res.status
+  };
+}
+
 export async function GET(request: NextRequest) {
   if (!isAllowed(request)) {
     return NextResponse.json(
@@ -170,6 +202,7 @@ export async function GET(request: NextRequest) {
   }> = [];
 
   const movies: MovieCard[] = [];
+  const page1Movies: MovieCard[] = [];
   const htmlTargets: Array<{ type: string; page: number }> = [];
 
   await pruneCache(false);
@@ -181,6 +214,9 @@ export async function GET(request: NextRequest) {
       try {
         const data = await getList(type, page, limit);
         movies.push(...data.items);
+        if (page === 1) {
+          page1Movies.push(...data.items.slice(0, 8));
+        }
         pageResults.push({
           type,
           page,
@@ -219,6 +255,14 @@ export async function GET(request: NextRequest) {
     ? await mapLimit(htmlTargets, htmlConcurrency, (target) => warmHtmlPage(request.nextUrl.origin, target.type, target.page))
     : [];
 
+  const detailResults = shouldWarmHtml
+    ? await mapLimit(page1Movies, htmlConcurrency, async (movie) => {
+        const detail = await warmMoviePage(request.nextUrl.origin, movie.slug);
+        const watch = await warmWatchPage(request.nextUrl.origin, movie.slug);
+        return { slug: movie.slug, detailOk: detail.ok, watchOk: watch.ok };
+      })
+    : [];
+
   await pruneCache(false);
 
   const stats = await cacheStats();
@@ -244,6 +288,9 @@ export async function GET(request: NextRequest) {
     htmlPagesDiscovered: htmlTargets.length,
     htmlPagesWarmed: htmlResults.length,
     htmlErrors: htmlResults.filter((item) => !item.ok).length,
+
+    detailPagesWarmed: detailResults.length,
+    detailErrors: detailResults.filter((item) => !item.detailOk || !item.watchOk).length,
 
     durationMs: Date.now() - startedAt,
     cache: stats
