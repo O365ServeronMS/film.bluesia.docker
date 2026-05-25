@@ -142,7 +142,7 @@ export function HlsVideo({ src, poster }: { src: string; poster?: string }) {
               tooltip: '',
             }
           ],
-          onSelect: function (item) {
+          onSelect: function () {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.srt,.vtt,.ass';

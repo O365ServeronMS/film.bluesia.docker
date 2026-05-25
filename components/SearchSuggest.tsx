@@ -1,5 +1,8 @@
 "use client";
 
+/* Suggestion thumbnails use the app-owned /api/image proxy. */
+/* eslint-disable @next/next/no-img-element */
+
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
@@ -25,16 +28,8 @@ export function SearchSuggest({ initialQuery = "", autoFocus = false }: SearchSu
   const rootRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    setQuery(initialQuery);
-  }, [initialQuery]);
-
-  useEffect(() => {
     const q = query.trim();
-    if (q.length < MIN_QUERY_LENGTH) {
-      setItems([]);
-      setState("idle");
-      return;
-    }
+    if (q.length < MIN_QUERY_LENGTH) return;
 
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
@@ -53,7 +48,7 @@ export function SearchSuggest({ initialQuery = "", autoFocus = false }: SearchSu
         setItems(nextItems);
         setState(nextItems.length > 0 ? "ready" : "empty");
         setOpen(true);
-      } catch (error) {
+      } catch {
         if (controller.signal.aborted) return;
         setItems([]);
         setState("error");
@@ -84,6 +79,14 @@ export function SearchSuggest({ initialQuery = "", autoFocus = false }: SearchSu
     router.push("/search?q=" + encodeURIComponent(q));
   }
 
+  function changeQuery(nextQuery: string) {
+    setQuery(nextQuery);
+    if (nextQuery.trim().length < MIN_QUERY_LENGTH) {
+      setItems([]);
+      setState("idle");
+    }
+  }
+
   function openMovie(slug: string) {
     setOpen(false);
     router.push("/movie/" + slug);
@@ -98,7 +101,7 @@ export function SearchSuggest({ initialQuery = "", autoFocus = false }: SearchSu
         <input
           name="q"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => changeQuery(event.target.value)}
           onFocus={() => setOpen(true)}
           placeholder="Tìm kiếm phim, diễn viên..."
           className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"

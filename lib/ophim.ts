@@ -1,4 +1,16 @@
-import { EpisodeServer, HomePayload, ListPayload, MovieCard, MovieDetail } from "@/lib/types";
+import type {
+  EpisodeServer,
+  HomePayload,
+  ListPayload,
+  MovieCard,
+  MovieDetail,
+  SourceLabel,
+  SourceListPayload,
+  SourceMovie,
+  SourceMoviePayload,
+  SourceRating,
+  SourceTaxonomyPayload
+} from "@/lib/types";
 import { buildSmartSpotlight, type SpotlightCandidate } from "@/lib/spotlight";
 import { detailCacheTtlSeconds, listCacheTtlSeconds, readJsonCache, searchCacheTtlSeconds, taxonomyCacheTtlSeconds, writeJsonCache } from "@/lib/cache";
 import { buildVsembedServer } from "@/lib/vsembed";
@@ -125,15 +137,28 @@ function cleanImage(input?: string, cdn?: string) {
   return `${cdnMovieFolder(cdn)}/${withoutLeadingSlash}`;
 }
 
-function pickName(raw: any) {
+function pickName(raw: SourceMovie) {
   return raw?.name || raw?.title || raw?.origin_name || "Không rõ tên";
 }
 
-export function normalizeCard(raw: any, cdn?: string): MovieCard {
-  const tmdb = raw?.tmdb || raw?.tmdb_rating || raw?.rating || {};
-  const imdb = raw?.imdb || {};
-  const categoryName = Array.isArray(raw?.category) ? raw.category.map((c: any) => c?.name).filter(Boolean).join(", ") : raw?.category;
-  const countryName = Array.isArray(raw?.country) ? raw.country.map((c: any) => c?.name).filter(Boolean).join(", ") : raw?.country;
+function sourceRating(value?: SourceRating | number | string) {
+  return typeof value === "object" && value !== null ? value : {};
+}
+
+function labelText(value?: SourceLabel[] | string) {
+  return Array.isArray(value) ? value.map((label) => label.name).filter(Boolean).join(", ") : value;
+}
+
+function detailLabels(value?: SourceLabel[] | string) {
+  if (!Array.isArray(value)) return [];
+  return value.filter((label): label is { id?: string; name: string; slug: string } => Boolean(label.name && label.slug));
+}
+
+export function normalizeCard(raw: SourceMovie, cdn?: string): MovieCard {
+  const tmdb = sourceRating(raw?.tmdb || raw?.tmdb_rating || raw?.rating);
+  const imdb = sourceRating(raw?.imdb);
+  const categoryName = labelText(raw?.category);
+  const countryName = labelText(raw?.country);
 
   return {
     name: pickName(raw),
@@ -154,7 +179,7 @@ export function normalizeCard(raw: any, cdn?: string): MovieCard {
       vote_count: Number(tmdb?.vote_count || 0) || undefined
     },
     imdb: {
-      id: imdb?.id || undefined,
+      id: imdb?.id == null ? undefined : String(imdb.id),
       rating: Number(imdb?.rating || 0) || undefined
     },
     country: countryName,
@@ -162,7 +187,7 @@ export function normalizeCard(raw: any, cdn?: string): MovieCard {
   };
 }
 
-function getItems(payload: any) {
+function getItems(payload: SourceListPayload) {
   const data = payload?.data || payload;
   const items = data?.items || payload?.items || data?.movies || [];
   const cdn = data?.APP_DOMAIN_CDN_IMAGE || payload?.APP_DOMAIN_CDN_IMAGE;
@@ -187,18 +212,18 @@ export async function getList(type: string, page = 1, limit = 24, country?: stri
     query.set("country", countrySlug);
   }
 
-  let payload: any;
+  let payload: SourceListPayload;
 
   if (apiListType === "phim-moi-cap-nhat") {
     try {
-      payload = await fetchJson(`/v1/api/danh-sach/phim-moi-cap-nhat?${query.toString()}`, 300);
+      payload = await fetchJson<SourceListPayload>(`/v1/api/danh-sach/phim-moi-cap-nhat?${query.toString()}`, 300);
     } catch {
       const legacyQuery = new URLSearchParams({ page: String(safePage) });
       if (countrySlug) legacyQuery.set("country", countrySlug);
-      payload = await fetchJson(`/danh-sach/phim-moi-cap-nhat?${legacyQuery.toString()}`, 300);
+      payload = await fetchJson<SourceListPayload>(`/danh-sach/phim-moi-cap-nhat?${legacyQuery.toString()}`, 300);
     }
   } else {
-    payload = await fetchJson(`/v1/api/danh-sach/${encodeURIComponent(apiListType)}?${query.toString()}`, 600);
+    payload = await fetchJson<SourceListPayload>(`/v1/api/danh-sach/${encodeURIComponent(apiListType)}?${query.toString()}`, 600);
   }
 
   const { items, cdn, data } = getItems(payload);
@@ -209,7 +234,7 @@ export async function getList(type: string, page = 1, limit = 24, country?: stri
 
   return {
     title: titleParts.join(" - "),
-    items: items.map((item: any) => normalizeCard(item, cdn)).filter((item: MovieCard) => item.slug),
+    items: items.map((item) => normalizeCard(item, cdn)).filter((item: MovieCard) => item.slug),
     page: Number(pagination?.currentPage || safePage),
     totalPages: Number(pagination?.totalPages || pagination?.total_pages || 0) || undefined
   };
@@ -218,12 +243,12 @@ export async function getList(type: string, page = 1, limit = 24, country?: stri
 export async function searchMovies(keyword: string, page = 1, limit = 24): Promise<ListPayload> {
   const q = keyword.trim();
   if (!q) return { title: "Tìm kiếm", items: [], page };
-  const payload: any = await fetchJson(`/v1/api/tim-kiem?keyword=${encodeURIComponent(q)}&page=${page}&limit=${limit}`, 300);
+  const payload = await fetchJson<SourceListPayload>(`/v1/api/tim-kiem?keyword=${encodeURIComponent(q)}&page=${page}&limit=${limit}`, 300);
   const { items, cdn, data } = getItems(payload);
   const pagination = data?.params?.pagination || {};
   return {
     title: `Tìm kiếm: ${q}`,
-    items: items.map((item: any) => normalizeCard(item, cdn)).filter((item: MovieCard) => item.slug),
+    items: items.map((item) => normalizeCard(item, cdn)).filter((item: MovieCard) => item.slug),
     page: Number(pagination?.currentPage || page),
     totalPages: Number(pagination?.totalPages || 0) || undefined
   };
@@ -274,14 +299,14 @@ export async function getHome(): Promise<HomePayload> {
 }
 
 export async function getMovie(slug: string): Promise<MovieDetail> {
-  const payload: any = await fetchJson(`/phim/${encodeURIComponent(slug)}`, 300);
+  const payload = await fetchJson<SourceMoviePayload>(`/phim/${encodeURIComponent(slug)}`, 300);
   const movieRaw = payload?.movie || payload?.data?.item || payload?.data?.movie || payload?.data || {};
   const cdn = payload?.APP_DOMAIN_CDN_IMAGE || payload?.data?.APP_DOMAIN_CDN_IMAGE;
   const base = normalizeCard(movieRaw, cdn);
   const episodesRaw = payload?.episodes || payload?.data?.episodes || [];
-  const episodes: EpisodeServer[] = Array.isArray(episodesRaw) ? episodesRaw.map((server: any) => ({
+  const episodes: EpisodeServer[] = Array.isArray(episodesRaw) ? episodesRaw.map((server) => ({
     serverName: "OPhim",
-    serverData: (server?.server_data || server?.serverData || []).map((ep: any, epIndex: number) => ({
+    serverData: (server?.server_data || server?.serverData || []).map((ep, epIndex) => ({
       name: normalizedEpisodeName(ep, epIndex),
       slug: normalizedEpisodeSlug(ep, epIndex),
       filename: ep?.filename || undefined,
@@ -296,8 +321,8 @@ export async function getMovie(slug: string): Promise<MovieDetail> {
     actor: Array.isArray(movieRaw?.actor) ? movieRaw.actor.filter(Boolean) : [],
     director: Array.isArray(movieRaw?.director) ? movieRaw.director.filter(Boolean) : [],
     episodeTotal: movieRaw?.episode_total || movieRaw?.episodeTotal || undefined,
-    categoryList: Array.isArray(movieRaw?.category) ? movieRaw.category : [],
-    countryList: Array.isArray(movieRaw?.country) ? movieRaw.country : [],
+    categoryList: detailLabels(movieRaw?.category),
+    countryList: detailLabels(movieRaw?.country),
     episodes
   };
 
@@ -310,11 +335,11 @@ export async function getMovie(slug: string): Promise<MovieDetail> {
 }
 
 export async function getCategories() {
-  const payload: any = await fetchJson(`/the-loai`, 3600);
+  const payload = await fetchJson<SourceTaxonomyPayload>(`/the-loai`, 3600);
   return Array.isArray(payload) ? payload : payload?.data || [];
 }
 
 export async function getCountries() {
-  const payload: any = await fetchJson(`/quoc-gia`, 3600);
+  const payload = await fetchJson<SourceTaxonomyPayload>(`/quoc-gia`, 3600);
   return Array.isArray(payload) ? payload : payload?.data || [];
 }

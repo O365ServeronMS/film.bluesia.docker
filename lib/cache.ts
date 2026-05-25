@@ -3,10 +3,9 @@ import path from "path";
 import { mkdir, readFile, readdir, rm, stat, writeFile } from "fs/promises";
 
 const DEFAULT_CACHE_ROOT = "/tmp/film-bluesia-net-cache";
-const DEFAULT_MAX_BYTES = 8 * 1024 * 1024 * 1024;
+const DEFAULT_MAX_BYTES = 2 * 1024 * 1024 * 1024;
 const DEFAULT_IMAGE_TTL_SECONDS = 60 * 60 * 24 * 15;
 const DEFAULT_DETAIL_TTL_SECONDS = 60 * 60 * 24 * 15;
-const DEFAULT_TAXONOMY_TTL_SECONDS = 60 * 60 * 24 * 15;
 const DEFAULT_LIST_TTL_SECONDS = 60 * 5;
 const DEFAULT_SEARCH_TTL_SECONDS = 60 * 30;
 const PRUNE_INTERVAL_MS = 10 * 60 * 1000;
@@ -96,16 +95,20 @@ function hashKey(key: string) {
   return crypto.createHash("sha256").update(key).digest("hex");
 }
 
+function runtimeCachePath(...segments: string[]) {
+  return path.join(/* turbopackIgnore: true */ ...segments);
+}
+
 function entryDir(namespace: string, key: string) {
-  return path.join(cacheRoot(), safeNamespace(namespace), hashKey(key));
+  return runtimeCachePath(cacheRoot(), safeNamespace(namespace), hashKey(key));
 }
 
 function dataPath(namespace: string, key: string, extension: "bin" | "json") {
-  return path.join(entryDir(namespace, key), `data.${extension}`);
+  return runtimeCachePath(entryDir(namespace, key), `data.${extension}`);
 }
 
 function metaPath(namespace: string, key: string) {
-  return path.join(entryDir(namespace, key), "meta.json");
+  return runtimeCachePath(entryDir(namespace, key), "meta.json");
 }
 
 function isFresh(mtimeMs: number, ttlSeconds: number) {
@@ -125,7 +128,7 @@ async function dirSize(dir: string): Promise<number> {
   try {
     const entries = await readdir(dir, { withFileTypes: true });
     const sizes = await Promise.all(entries.map(async (entry) => {
-      const child = path.join(dir, entry.name);
+      const child = runtimeCachePath(dir, entry.name);
       if (entry.isDirectory()) return dirSize(child);
       if (entry.isFile()) return fileSize(child);
       return 0;
@@ -145,16 +148,16 @@ async function listCacheEntries() {
 
     for (const namespace of namespaces) {
       if (!namespace.isDirectory()) continue;
-      const namespacePath = path.join(root, namespace.name);
+      const namespacePath = runtimeCachePath(root, namespace.name);
       const entries = await readdir(namespacePath, { withFileTypes: true });
 
       for (const entry of entries) {
         if (!entry.isDirectory()) continue;
-        const dir = path.join(namespacePath, entry.name);
-        const dataBin = path.join(dir, "data.bin");
-        const dataJson = path.join(dir, "data.json");
+        const dir = runtimeCachePath(namespacePath, entry.name);
+        const dataBin = runtimeCachePath(dir, "data.bin");
+        const dataJson = runtimeCachePath(dir, "data.json");
         const dataInfo = await stat(dataBin).catch(() => stat(dataJson).catch(() => null));
-        const metaFilePath = path.join(dir, "meta.json");
+        const metaFilePath = runtimeCachePath(dir, "meta.json");
         const metaRaw = await readFile(metaFilePath, "utf8").catch(() => "{}");
         let entrySize: number;
         try {

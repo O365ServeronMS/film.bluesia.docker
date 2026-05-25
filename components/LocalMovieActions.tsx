@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { Check, Clock3, Heart, Plus } from "lucide-react";
 import type { MovieCard } from "@/lib/types";
 
@@ -34,6 +34,30 @@ function write(key: string, movies: StoredMovie[]) {
   window.dispatchEvent(new Event(LEGACY_LOCAL_MOVIES_UPDATED_EVENT));
 }
 
+function subscribeToLocalMovies(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener("focus", onStoreChange);
+  window.addEventListener(LOCAL_MOVIES_UPDATED_EVENT, onStoreChange);
+  window.addEventListener(LEGACY_LOCAL_MOVIES_UPDATED_EVENT, onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener("focus", onStoreChange);
+    window.removeEventListener(LOCAL_MOVIES_UPDATED_EVENT, onStoreChange);
+    window.removeEventListener(LEGACY_LOCAL_MOVIES_UPDATED_EVENT, onStoreChange);
+  };
+}
+
+function useStoredMovies(storageKey: string, legacyStorageKey: string) {
+  const snapshot = useSyncExternalStore(
+    subscribeToLocalMovies,
+    () => JSON.stringify(read(storageKey, legacyStorageKey)),
+    () => "[]"
+  );
+
+  return useMemo(() => JSON.parse(snapshot) as StoredMovie[], [snapshot]);
+}
+
 export function addHistory(movie: MovieCard) {
   if (typeof window === "undefined") return;
   const current = read(HISTORY_KEY, LEGACY_HISTORY_KEY).filter((item) => item.slug !== movie.slug);
@@ -43,18 +67,13 @@ export function addHistory(movie: MovieCard) {
 export function useLocalMovies(key: "favorites" | "history") {
   const storageKey = key === "favorites" ? FAV_KEY : HISTORY_KEY;
   const legacyStorageKey = key === "favorites" ? LEGACY_FAV_KEY : LEGACY_HISTORY_KEY;
-  const [items, setItems] = useState<StoredMovie[]>([]);
-  useEffect(() => setItems(read(storageKey, legacyStorageKey)), [storageKey, legacyStorageKey]);
-  return { items, setItems: (next: StoredMovie[]) => { setItems(next); write(storageKey, next); } };
+  const items = useStoredMovies(storageKey, legacyStorageKey);
+  return { items, setItems: (next: StoredMovie[]) => write(storageKey, next) };
 }
 
 export function MovieActions({ movie }: { movie: MovieCard }) {
-  const [favorites, setFavorites] = useState<StoredMovie[]>([]);
+  const favorites = useStoredMovies(FAV_KEY, LEGACY_FAV_KEY);
   const isFavorite = useMemo(() => favorites.some((item) => item.slug === movie.slug), [favorites, movie.slug]);
-
-  useEffect(() => {
-    setFavorites(read(FAV_KEY, LEGACY_FAV_KEY));
-  }, []);
 
   const toggleFavorite = () => {
     const current = read(FAV_KEY, LEGACY_FAV_KEY);
@@ -62,7 +81,6 @@ export function MovieActions({ movie }: { movie: MovieCard }) {
       ? current.filter((item) => item.slug !== movie.slug)
       : [{ ...movie, savedAt: Date.now() }, ...current];
     write(FAV_KEY, next);
-    setFavorites(next);
   };
 
   return (

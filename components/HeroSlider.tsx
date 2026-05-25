@@ -1,5 +1,8 @@
 "use client";
 
+/* Images use the app-owned responsive /api/image proxy rather than the Next image pipeline. */
+/* eslint-disable @next/next/no-img-element */
+
 import { KeyboardEvent, TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Info, Play, Sparkles, Star } from "lucide-react";
@@ -137,10 +140,6 @@ export function HeroSlider({ items }: { items: MovieCard[] }) {
   }, []);
 
   useEffect(() => {
-    setActiveIndex(0);
-  }, [slides.length]);
-
-  useEffect(() => {
     if (slides.length <= 1) return;
 
     const timer = window.setInterval(() => {
@@ -152,7 +151,8 @@ export function HeroSlider({ items }: { items: MovieCard[] }) {
 
   if (!slides.length) return null;
 
-  const active = slides[activeIndex] ?? slides[0];
+  const visibleIndex = activeIndex < slides.length ? activeIndex : 0;
+  const active = slides[visibleIndex];
   const activeImage = active.thumb || active.poster;
   const isPersonalized = Boolean(personalData && (personalData.favorites.length || personalData.history.length));
   const canNavigate = slides.length > 1;
@@ -219,8 +219,8 @@ export function HeroSlider({ items }: { items: MovieCard[] }) {
             ])}
             sizes="(min-width: 640px) 688px, calc(100vw - 32px)"
             alt={active.name}
-            loading={activeIndex === 0 ? "eager" : "lazy"}
-            fetchPriority={activeIndex === 0 ? "high" : "auto"}
+            loading={visibleIndex === 0 ? "eager" : "lazy"}
+            fetchPriority={visibleIndex === 0 ? "high" : "auto"}
             decoding="async"
             className="absolute inset-0 h-full w-full object-cover opacity-80 transition-opacity duration-700"
           />
@@ -278,7 +278,7 @@ export function HeroSlider({ items }: { items: MovieCard[] }) {
                 className="grid h-6 min-w-6 place-items-center rounded-full transition"
               >
                 <span
-                  className={index === activeIndex ? "h-2.5 w-10 rounded-full bg-gold transition-all" : "h-2.5 w-2.5 rounded-full bg-white/40 transition-all hover:bg-white"}
+                  className={index === visibleIndex ? "h-2.5 w-10 rounded-full bg-gold transition-all" : "h-2.5 w-2.5 rounded-full bg-white/40 transition-all hover:bg-white"}
                 />
               </button>
             ))}

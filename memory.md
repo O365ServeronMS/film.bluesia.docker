@@ -1,6 +1,6 @@
 # Memory - Tổng hợp tính năng của FilmBluesia
 
-Tài liệu này tổng hợp cấu trúc kiến trúc và các tính năng chính của dự án **FilmBluesia** (phiên bản 5.0.2) dựa trên phân tích mã nguồn.
+Tài liệu này tổng hợp cấu trúc kiến trúc và các tính năng chính của dự án **FilmBluesia** (phiên bản 6.0.1) dựa trên phân tích mã nguồn.
 
 ---
 
@@ -88,7 +88,7 @@ Nhằm giảm tải cho API của bên thứ ba và tăng tốc độ tải tran
     - Tìm kiếm phim: Cache 30 phút.
     - Chi tiết phim, danh mục thể loại, quốc gia, ảnh: Cache 15 ngày.
 - **Cơ chế Prune Cache tự động:**
-  - Khới tạo giới hạn dung lượng cache tối đa (mặc định 8 GB).
+  - Khới tạo giới hạn dung lượng cache tối đa (mặc định 2 GB).
   - Khi vượt quá 90% dung lượng tối đa, hệ thống tự động dọn dẹp các tập tin hết hạn trước, sau đó xóa bớt các file cũ nhất dựa trên thời gian truy cập gần nhất (thuật toán LRU).
 - **Bộ đệm hình ảnh 2 lớp & Chuyển đổi WebP (`app/api/image/route.ts`):**
   - **Lớp 1 (In-Memory Cache):** Sử dụng cấu trúc Map trong bộ nhớ lưu trữ tối đa 150 hình ảnh kích thước nhỏ (dưới 200 KB) để phục vụ siêu nhanh các hình ảnh có lượng truy cập cực lớn.

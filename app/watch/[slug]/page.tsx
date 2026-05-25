@@ -135,15 +135,20 @@ export default async function WatchPage(props: Props) {
       <link rel="dns-prefetch" href="https://vsembed.ru" />
       <link rel="dns-prefetch" href="https://vsembed.su" />
       <WatchRecorder movie={movie} />
-      <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-white/10 bg-black/90 px-4 py-3 backdrop-blur-xl">
-        <Link href={`/movie/${movie.slug}`} className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-base font-black">{movie.name}</h1>
-          <p className="truncate text-xs text-zinc-400">{displayEpisodeServerName(server?.serverName)} · {episode?.name || "Tập phim"}</p>
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-black/90 backdrop-blur-xl">
+        <div className="border-b border-white/5 px-4 pb-3 pt-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gold">Đang xem</p>
+          <h1 className="mt-1 truncate text-lg font-black text-white">{movie.name}</h1>
         </div>
-        {embed && <a href={embed} target="_blank" rel="noreferrer" className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white"><ExternalLink className="h-5 w-5" /></a>}
+        <div className="flex items-center gap-3 px-4 py-3">
+          <Link href={`/movie/${movie.slug}`} aria-label={`Quay lại ${movie.name}`} className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white">
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <p className="min-w-0 flex-1 truncate text-sm font-semibold text-zinc-300">
+            {displayEpisodeServerName(server?.serverName)} · {episode?.name || "Tập phim"}
+          </p>
+          {embed && <a href={embed} target="_blank" rel="noreferrer" aria-label="Mở trình phát trong tab mới" className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white"><ExternalLink className="h-5 w-5" /></a>}
+        </div>
       </header>
 
       <section className="aspect-video w-full bg-black">

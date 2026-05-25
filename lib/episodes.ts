@@ -1,4 +1,4 @@
-import type { Episode, EpisodeServer } from "@/lib/types";
+import type { Episode, EpisodeServer, SourceEpisode } from "@/lib/types";
 
 function cleanText(value?: string) {
   return String(value || "").trim();
@@ -9,7 +9,7 @@ function isGenericEpisodeLabel(value?: string) {
   return !text || text === "tap phim" || text === "t\u1eadp phim";
 }
 
-export function normalizedEpisodeName(raw: any, index: number) {
+export function normalizedEpisodeName(raw: SourceEpisode, index: number) {
   const name = cleanText(raw?.name);
   if (!isGenericEpisodeLabel(name)) return name;
 
@@ -22,7 +22,7 @@ export function normalizedEpisodeName(raw: any, index: number) {
   return `Tap ${index + 1}`;
 }
 
-export function normalizedEpisodeSlug(raw: any, index: number) {
+export function normalizedEpisodeSlug(raw: SourceEpisode, index: number) {
   const slug = cleanText(raw?.slug);
   if (slug) return slug;
 
