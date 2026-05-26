@@ -56,6 +56,61 @@ button, input, select, textarea {
   padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
 }
 
+@media (orientation: landscape) and (max-height: 520px) {
+  :root {
+    --bottom-nav-height: 52px;
+  }
+
+  .watch-header {
+    gap: 0.5rem;
+    padding-block: 0.375rem;
+  }
+
+  .watch-header-action {
+    height: 2.25rem;
+    width: 2.25rem;
+  }
+
+  .watch-header-content,
+  .watch-header-copy {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+
+  .watch-header-eyebrow {
+    display: none;
+  }
+
+  .watch-header-title {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .watch-header-meta {
+    flex-shrink: 0;
+    font-size: 0.6875rem;
+  }
+
+  .bottom-nav {
+    padding-bottom: calc(4px + env(safe-area-inset-bottom));
+    padding-top: 4px;
+  }
+
+  .bottom-nav-item {
+    padding-block: 5px;
+  }
+
+  .bottom-nav-icon {
+    margin-bottom: 0;
+  }
+
+  .bottom-nav-label {
+    display: none;
+  }
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

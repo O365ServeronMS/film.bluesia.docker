@@ -135,20 +135,20 @@ export default async function WatchPage(props: Props) {
       <link rel="dns-prefetch" href="https://vsembed.ru" />
       <link rel="dns-prefetch" href="https://vsembed.su" />
       <WatchRecorder movie={movie} />
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-black/90 backdrop-blur-xl">
-        <div className="border-b border-white/5 px-4 pb-3 pt-3">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gold">Đang xem</p>
-          <h1 className="mt-1 truncate text-lg font-black text-white">{movie.name}</h1>
+      <header className="watch-header sticky top-0 z-40 flex items-center gap-3 border-b border-white/10 bg-black/90 px-3 py-2 backdrop-blur-xl">
+        <Link href={`/movie/${movie.slug}`} aria-label={`Quay lại ${movie.name}`} className="watch-header-action grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 text-white">
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div className="watch-header-content min-w-0 flex-1">
+          <p className="watch-header-eyebrow text-[10px] font-bold uppercase tracking-[0.16em] text-gold">Đang xem</p>
+          <div className="watch-header-copy min-w-0">
+            <h1 className="watch-header-title truncate text-base font-black text-white">{movie.name}</h1>
+            <p className="watch-header-meta truncate text-xs text-zinc-400">
+              {displayEpisodeServerName(server?.serverName)} · {episode?.name || "Tập phim"}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-3 px-4 py-3">
-          <Link href={`/movie/${movie.slug}`} aria-label={`Quay lại ${movie.name}`} className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <p className="min-w-0 flex-1 truncate text-sm font-semibold text-zinc-300">
-            {displayEpisodeServerName(server?.serverName)} · {episode?.name || "Tập phim"}
-          </p>
-          {embed && <a href={embed} target="_blank" rel="noreferrer" aria-label="Mở trình phát trong tab mới" className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white"><ExternalLink className="h-5 w-5" /></a>}
-        </div>
+        {embed && <a href={embed} target="_blank" rel="noreferrer" aria-label="Mở trình phát trong tab mới" className="watch-header-action grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 text-white"><ExternalLink className="h-5 w-5" /></a>}
       </header>
 
       <section className="aspect-video w-full bg-black">
