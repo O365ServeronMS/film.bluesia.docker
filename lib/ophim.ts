@@ -154,6 +154,12 @@ function detailLabels(value?: SourceLabel[] | string) {
   return value.filter((label): label is { id?: string; name: string; slug: string } => Boolean(label.name && label.slug));
 }
 
+const hiddenListSlugs = new Set(["khu-rung-than-bi"]);
+
+function visibleListCards(items: MovieCard[]) {
+  return items.filter((item) => item.slug && !hiddenListSlugs.has(item.slug));
+}
+
 export function normalizeCard(raw: SourceMovie, cdn?: string): MovieCard {
   const tmdb = sourceRating(raw?.tmdb || raw?.tmdb_rating || raw?.rating);
   const imdb = sourceRating(raw?.imdb);
@@ -234,7 +240,7 @@ export async function getList(type: string, page = 1, limit = 24, country?: stri
 
   return {
     title: titleParts.join(" - "),
-    items: items.map((item) => normalizeCard(item, cdn)).filter((item: MovieCard) => item.slug),
+    items: visibleListCards(items.map((item) => normalizeCard(item, cdn))),
     page: Number(pagination?.currentPage || safePage),
     totalPages: Number(pagination?.totalPages || pagination?.total_pages || 0) || undefined
   };
